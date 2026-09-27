@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import type { LessonRequest } from "../shared/schemas";
 import { GenerationError } from "../server/errors";
-import { createClaudeGenerator } from "../server/generator";
+import { createClaudeGenerator } from "../server/claude";
 import { OUTLINE_SYSTEM } from "../server/prompts";
 
 const rawOutline = {

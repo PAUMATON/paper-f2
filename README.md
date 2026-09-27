@@ -1,6 +1,6 @@
 # 🌳 Arrel
 
-**Aprèn el que vulguis, node a node.** Escrius què vols aprendre, i la IA (Claude) et crea un arbre d'aprenentatge fet a mida. Cada node és una sessió d'estudi amb explicació, exemple, exercici i un mini test. Quan superes el test, s'obren els nodes següents.
+**Aprèn el que vulguis, node a node.** Escrius què vols aprendre, i la IA (Gemini, o Claude si ho prefereixes) et crea un arbre d'aprenentatge fet a mida. Cada node és una sessió d'estudi amb explicació, exemple, exercici i un mini test. Quan superes el test, s'obren els nodes següents.
 
 Aquesta és la **v1 web**, en català, castellà i anglès. El bloquejador de distraccions per a Windows arribarà a la v2.
 
@@ -23,11 +23,11 @@ Aquesta és la **v1 web**, en català, castellà i anglès. El bloquejador de di
    cd paper-f2
    npm install
    ```
-3. Crea el fitxer de configuració i posa-hi la teva clau d'Anthropic, que pots treure de [console.anthropic.com](https://console.anthropic.com/settings/keys):
+3. Crea el fitxer de configuració i posa-hi la teva clau de Gemini, que és gratis i es treu a [aistudio.google.com/apikey](https://aistudio.google.com/apikey):
    ```
    copy .env.example .env
    ```
-   Obre `.env` amb el Bloc de notes i omple `ANTHROPIC_API_KEY=...`
+   Obre `.env` amb el Bloc de notes i omple `GEMINI_API_KEY=...`
 4. Engega-la:
    ```
    npm run dev
@@ -49,17 +49,19 @@ Amb això, el mateix servidor fa anar l'API i la web a **http://localhost:8787**
 
 | Variable | Per a què serveix | Per defecte |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | La clau de l'API de Claude | (cal posar-la) |
-| `ARREL_MODEL` | El model que escriu els arbres i les lliçons | `claude-opus-5` |
-| `ARREL_EFFORT` | Com de fons pensa: `low`, `medium`, `high` | `medium` |
+| `GEMINI_API_KEY` | La clau de l'API de Gemini | (cal posar-la) |
+| `ARREL_MODEL` | El model que escriu els arbres i les lliçons | `gemini-flash-latest` |
+| `ARREL_PROVIDER` | `gemini` o `claude` | `gemini` |
 | `PORT` | El port del servidor | `8787` |
 
-**Cost orientatiu:** cada arbre i cada lliçó és una crida a Claude. Si vols abaratir-ho, pots canviar `ARREL_MODEL` a `claude-sonnet-5`, que és més econòmic, i comparar la qualitat.
+Per fer servir **Claude** en lloc de Gemini, posa `ARREL_PROVIDER=claude` i `ANTHROPIC_API_KEY=...`. En aquest cas, el model per defecte és `claude-opus-5` i pots ajustar `ARREL_EFFORT` (`low`, `medium` o `high`).
+
+**Cost orientatiu:** cada arbre i cada lliçó és una crida a la IA. La clau de Gemini té un nivell gratuït amb un límit de peticions; si et quedes curt, pots activar la facturació a Google AI Studio. Si vols més qualitat, prova `ARREL_MODEL=gemini-pro-latest`.
 
 ## Com està feta
 
 ```
-server/   API (Hono + SDK d'Anthropic): /api/outline, /api/lesson, /api/health
+server/   API (Hono + SDK de Gemini o d'Anthropic): /api/outline, /api/lesson, /api/health
 shared/   Tipus, esquemes i lògica de l'arbre compartits entre servidor i web
 src/      Web (React + Vite): pantalla d'inici, arbre, lliçons, tests
 tests/    Proves automàtiques (Vitest)
