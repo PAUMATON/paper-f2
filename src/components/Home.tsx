@@ -3,6 +3,7 @@ import { LEVELS, type Lang, type Level } from "../../shared/types";
 import { ApiError, createOutline, getHealth } from "../api";
 import { createDemoTree, DEMO_ID } from "../demo/pythonCa";
 import type { Strings, UiError } from "../i18n";
+import { KeySettings } from "./KeySettings";
 import { deleteTree, listTrees, loadTree, saveTree, type StoredTree } from "../storage";
 
 interface Props {
@@ -21,11 +22,15 @@ export function Home({ t, lang, onOpen }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<UiError | null>(null);
   const [ai, setAi] = useState<boolean | null>(null);
+  const [canSetKey, setCanSetKey] = useState(false);
   const [trees, setTrees] = useState(listTrees);
 
   useEffect(() => {
     getHealth().then(
-      (h) => setAi(h.ai),
+      (h) => {
+        setAi(h.ai);
+        setCanSetKey(h.canSetKey);
+      },
       () => setAi(null),
     );
   }, []);
@@ -107,10 +112,21 @@ export function Home({ t, lang, onOpen }: Props) {
                 {t.errors[error]}
               </p>
             )}
-            {ai === false && !error && <p className="alert">{t.aiOff}</p>}
+            {ai === false && !canSetKey && !error && <p className="alert">{t.aiOff}</p>}
           </form>
         )}
       </section>
+
+      {canSetKey && ai !== null && (
+        <KeySettings
+          t={t}
+          connected={ai}
+          onSaved={() => {
+            setAi(true);
+            setError(null);
+          }}
+        />
+      )}
 
       <section className="library">
         <h2>{t.myTrees}</h2>

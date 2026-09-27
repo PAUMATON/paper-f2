@@ -26,8 +26,12 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return data as T;
 }
 
-export async function getHealth(): Promise<{ ai: boolean }> {
+export async function getHealth(): Promise<{ ai: boolean; canSetKey: boolean }> {
   return request("/api/health");
+}
+
+export async function saveKey(key: string): Promise<void> {
+  await request("/api/key", { key });
 }
 
 export async function createOutline(req: OutlineRequest): Promise<Outline> {

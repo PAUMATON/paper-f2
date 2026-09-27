@@ -51,7 +51,7 @@ const lessonBody = {
 describe("API", () => {
   it("reports whether the AI is configured", async () => {
     const res = await setup({}, false).app.request("/api/health");
-    expect(await res.json()).toEqual({ ok: true, ai: false });
+    expect(await res.json()).toEqual({ ok: true, ai: false, canSetKey: false });
   });
 
   it("creates an outline", async () => {
@@ -109,5 +109,28 @@ describe("API", () => {
       expect(await res.json()).toEqual({ error: code });
       expect(outlineFn).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it("saves a key only from the same computer", async () => {
+    const saveKey = vi.fn(async () => {});
+    const app = createApp({ generator: setup().generator, aiConfigured: false, saveKey });
+    const send = (host: string, key: unknown) =>
+      app.request("/api/key", {
+        method: "POST",
+        headers: { "content-type": "application/json", host },
+        body: JSON.stringify({ key }),
+      });
+
+    expect(await (await app.request("/api/health", { headers: { host: "localhost:5173" } })).json()).toEqual({
+      ok: true,
+      ai: false,
+      canSetKey: true,
+    });
+    expect((await send("localhost:5173", "AIzaSyTest_key-123")).status).toBe(200);
+    expect(saveKey).toHaveBeenCalledWith("AIzaSyTest_key-123");
+    expect((await send("localhost:5173", "short")).status).toBe(400);
+    expect((await send("localhost:5173", "AIza key\nINJECTED=1")).status).toBe(400);
+    expect((await send("arrel.example.com", "AIzaSyTest_key-123")).status).toBe(403);
+    expect(saveKey).toHaveBeenCalledTimes(1);
   });
 });

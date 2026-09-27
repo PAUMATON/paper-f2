@@ -1,9 +1,10 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { createApp } from "./app";
+import { createApp, type AppDeps } from "./app";
 import { createClaudeGenerator, type Effort } from "./claude";
 import { createGeminiGenerator } from "./gemini";
+import type { Generator } from "./generator";
 
 try {
   process.loadEnvFile();
@@ -19,7 +20,7 @@ const aiConfigured =
     ? Boolean(geminiKey)
     : Boolean(env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_PROFILE);
 
-const generator =
+const generator: Generator =
   provider === "gemini"
     ? createGeminiGenerator({ apiKey: geminiKey, model: env.ARREL_MODEL || undefined, configured: aiConfigured })
     : createClaudeGenerator({
@@ -28,7 +29,24 @@ const generator =
         configured: aiConfigured,
       });
 
-const app = createApp({ aiConfigured, generator });
+const deps: AppDeps = { aiConfigured, generator };
+
+// With Gemini, the key can also be pasted in the app: it is written to .env and used right away.
+if (provider === "gemini") {
+  deps.saveKey = async (key) => {
+    const current = existsSync(".env") ? readFileSync(".env", "utf8") : "";
+    const line = `GEMINI_API_KEY=${key}`;
+    const next = /^GEMINI_API_KEY=.*$/m.test(current)
+      ? current.replace(/^GEMINI_API_KEY=.*$/m, line)
+      : `${current}${current && !current.endsWith("\n") ? "\n" : ""}${line}\n`;
+    writeFileSync(".env", next);
+    process.env.GEMINI_API_KEY = key;
+    deps.generator = createGeminiGenerator({ apiKey: key, model: env.ARREL_MODEL || undefined });
+    deps.aiConfigured = true;
+  };
+}
+
+const app = createApp(deps);
 
 // After `npm run build`, the same server also serves the web app.
 if (existsSync("dist")) app.use("/*", serveStatic({ root: "./dist" }));
